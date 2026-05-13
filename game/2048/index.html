@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>2048</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: 'Arial', sans-serif;
+    background: #faf8ef;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    touch-action: none;
+    user-select: none;
+}
+.container {
+    width: 100%;
+    max-width: 420px;
+    padding: 15px;
+}
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+h1 {
+    font-size: 48px;
+    color: #776e65;
+    font-weight: bold;
+}
+.scores {
+    display: flex;
+    gap: 8px;
+}
+.score-box {
+    background: #bbada0;
+    border-radius: 6px;
+    padding: 8px 16px;
+    text-align: center;
+    color: white;
+    min-width: 70px;
+}
+.score-box .label {
+    font-size: 11px;
+    text-transform: uppercase;
+    opacity: 0.8;
+}
+.score-box .value {
+    font-size: 20px;
+    font-weight: bold;
+}
+.info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+.points-display {
+    font-size: 16px;
+    color: #776e65;
+    font-weight: bold;
+}
+.new-game-btn {
+    background: #8f7a66;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+}
+.new-game-btn:hover {
+    background: #9f8b77;
+}
+.grid-container {
+    background: #bbada0;
+    border-radius: 8px;
+    padding: 8px;
+    position: relative;
+}
+.grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+}
+.cell {
+    background: #cdc1b4;
+    border-radius: 4px;
+    aspect-ratio: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 32px;
+    font-weight: bold;
+    color: #776e65;
+    transition: all 0.1s ease;
+}
+.cell[data-value="2"] { background: #eee4da; }
+.cell[data-value="4"] { background: #ede0c8; }
+.cell[data-value="8"] { background: #f2b179; color: white; }
+.cell[data-value="16"] { background: #f59563; color: white; }
+.cell[data-value="32"] { background: #f67c5f; color: white; }
+.cell[data-value="64"] { background: #f65e3b; color: white; }
+.cell[data-value="128"] { background: #edcf72; color: white; font-size: 28px; }
+.cell[data-value="256"] { background: #edcc61; color: white; font-size: 28px; }
+.cell[data-value="512"] { background: #edc850; color: white; font-size: 28px; }
+.cell[data-value="1024"] { background: #edc53f; color: white; font-size: 22px; }
+.cell[data-value="2048"] { background: #edc22e; color: white; font-size: 22px; }
+.cell[data-value="4096"] { background: #3c3a32; color: white; font-size: 20px; }
+.cell[data-value="8192"] { background: #3c3a32; color: white; font-size: 20px; }
+.overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(238, 228, 218, 0.9);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+}
+.overlay h2 {
+    font-size: 40px;
+    color: #776e65;
+    margin-bottom: 15px;
+}
+.overlay p {
+    font-size: 18px;
+    color: #776e65;
+    margin-bottom: 15px;
+}
+.save-btn {
+    background: #8f7a66;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 12px 30px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    margin: 5px;
+}
+.save-btn:hover { background: #9f8b77; }
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>2048</h1>
+        <div class="scores">
+            <div class="score-box">
+                <div class="label">分数</div>
+                <div class="value" id="score">0</div>
+            </div>
+            <div class="score-box">
+                <div class="label">最高</div>
+                <div class="value" id="best">0</div>
+            </div>
+        </div>
+    </div>
+    <div class="info">
+        <div class="points-display">🎮 积分: <span id="points">0</span></div>
+        <button class="new-game-btn" onclick="newGame()">新游戏</button>
+    </div>
+    <div class="grid-container">
+        <div class="grid" id="grid"></div>
+        <div class="overlay hidden" id="game-over">
+            <h2 id="overlay-title">游戏结束!</h2>
+            <p>得分: <span id="final-score">0</span></p>
+            <p>获得积分: <span id="earned-points">0</span></p>
+            <button class="save-btn" onclick="saveScore()">保存分数</button>
+            <button class="save-btn" onclick="newGame()">再来一局</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let grid = [];
+let score = 0;
+let bestScore = parseInt(localStorage.getItem('2048_best') || '0');
+let gameOver = false;
+let userId = null;
+let chatId = null;
+let gameServerUrl = null;
+
+// Parse URL params
+const params = new URLSearchParams(window.location.search);
+userId = params.get('user_id');
+chatId = params.get('chat_id');
+gameServerUrl = params.get('server') || '';
+
+document.getElementById('best').textContent = bestScore;
+
+function newGame() {
+    grid = Array(4).fill(null).map(() => Array(4).fill(0));
+    score = 0;
+    gameOver = false;
+    addRandomTile();
+    addRandomTile();
+    render();
+    document.getElementById('game-over').classList.add('hidden');
+}
+
+function addRandomTile() {
+    const empty = [];
+    for (let r = 0; r < 4; r++)
+        for (let c = 0; c < 4; c++)
+            if (grid[r][c] === 0) empty.push([r, c]);
+    if (empty.length === 0) return;
+    const [r, c] = empty[Math.floor(Math.random() * empty.length)];
+    grid[r][c] = Math.random() < 0.9 ? 2 : 4;
+}
+
+function render() {
+    const gridEl = document.getElementById('grid');
+    gridEl.innerHTML = '';
+    for (let r = 0; r < 4; r++) {
+        for (let c = 0; c < 4; c++) {
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            const val = grid[r][c];
+            if (val) {
+                cell.textContent = val;
+                cell.setAttribute('data-value', val);
+            }
+            gridEl.appendChild(cell);
+        }
+    }
+    document.getElementById('score').textContent = score;
+    document.getElementById('points').textContent = Math.floor(score / 10);
+    if (score > bestScore) {
+        bestScore = score;
+        localStorage.setItem('2048_best', bestScore);
+        document.getElementById('best').textContent = bestScore;
+    }
+}
+
+function slide(row) {
+    let arr = row.filter(v => v !== 0);
+    for (let i = 0; i < arr.length - 1; i++) {
+        if (arr[i] === arr[i + 1]) {
+            arr[i] *= 2;
+            score += arr[i];
+            arr.splice(i + 1, 1);
+        }
+    }
+    while (arr.length < 4) arr.push(0);
+    return arr;
+}
+
+function move(direction) {
+    if (gameOver) return;
+    const oldGrid = JSON.stringify(grid);
+
+    if (direction === 'left') {
+        for (let r = 0; r < 4; r++) grid[r] = slide(grid[r]);
+    } else if (direction === 'right') {
+        for (let r = 0; r < 4; r++) grid[r] = slide(grid[r].reverse()).reverse();
+    } else if (direction === 'up') {
+        for (let c = 0; c < 4; c++) {
+            let col = [grid[0][c], grid[1][c], grid[2][c], grid[3][c]];
+            col = slide(col);
+            for (let r = 0; r < 4; r++) grid[r][c] = col[r];
+        }
+    } else if (direction === 'down') {
+        for (let c = 0; c < 4; c++) {
+            let col = [grid[3][c], grid[2][c], grid[1][c], grid[0][c]];
+            col = slide(col);
+            for (let r = 0; r < 4; r++) grid[r][c] = col[3 - r];
+        }
+    }
+
+    if (JSON.stringify(grid) !== oldGrid) {
+        addRandomTile();
+        render();
+        if (checkGameOver()) {
+            gameOver = true;
+            showGameOver();
+        }
+    }
+}
+
+function checkGameOver() {
+    for (let r = 0; r < 4; r++)
+        for (let c = 0; c < 4; c++) {
+            if (grid[r][c] === 0) return false;
+            if (c < 3 && grid[r][c] === grid[r][c + 1]) return false;
+            if (r < 3 && grid[r][c] === grid[r + 1][c]) return false;
+        }
+    return true;
+}
+
+function showGameOver() {
+    const points = Math.floor(score / 10);
+    document.getElementById('final-score').textContent = score;
+    document.getElementById('earned-points').textContent = '+' + points;
+    document.getElementById('game-over').classList.remove('hidden');
+
+    const title = document.getElementById('overlay-title');
+    for (let r = 0; r < 4; r++)
+        for (let c = 0; c < 4; c++)
+            if (grid[r][c] === 2048) {
+                title.textContent = '🎉 你赢了!';
+                return;
+            }
+    title.textContent = '游戏结束!';
+}
+
+function saveScore() {
+    const points = Math.floor(score / 10);
+    if (points <= 0) {
+        alert('没有积分可以保存！');
+        return;
+    }
+
+    if (!gameServerUrl) {
+        alert('未配置游戏服务器！');
+        return;
+    }
+
+    fetch(gameServerUrl + '/api/game_score', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            user_id: parseInt(userId),
+            chat_id: parseInt(chatId),
+            game: '2048',
+            score: score,
+            points: points,
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.ok) {
+            alert('✅ 积分已保存！获得 ' + points + ' 积分');
+            document.getElementById('game-over').classList.add('hidden');
+        } else {
+            alert('❌ 保存失败: ' + (data.message || '未知错误'));
+        }
+    })
+    .catch(e => {
+        alert('❌ 网络错误: ' + e.message);
+    });
+}
+
+// Keyboard controls
+document.addEventListener('keydown', e => {
+    const map = {
+        'ArrowLeft': 'left', 'ArrowRight': 'right',
+        'ArrowUp': 'up', 'ArrowDown': 'down',
+        'a': 'left', 'd': 'right', 'w': 'up', 's': 'down',
+    };
+    if (map[e.key]) {
+        e.preventDefault();
+        move(map[e.key]);
+    }
+});
+
+// Touch controls
+let touchStartX, touchStartY;
+document.addEventListener('touchstart', e => {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+});
+document.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dy = e.changedTouches[0].clientY - touchStartY;
+    const absDx = Math.abs(dx);
+    const absDy = Math.abs(dy);
+    if (Math.max(absDx, absDy) < 30) return;
+    if (absDx > absDy) {
+        move(dx > 0 ? 'right' : 'left');
+    } else {
+        move(dy > 0 ? 'down' : 'up');
+    }
+});
+
+// Telegram WebApp integration
+if (window.Telegram && window.Telegram.WebApp) {
+    const tg = window.Telegram.WebApp;
+    tg.ready();
+    tg.expand();
+}
+
+newGame();
+</script>
+</body>
+</html>

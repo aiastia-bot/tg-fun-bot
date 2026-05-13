@@ -1,0 +1,79 @@
+
+
+Bot 定位
+
+群组娱乐 + 互动积分系统，适合社群日常活跃。
+
+功能模块
+
+1. 签到积分系统
+
+• /sign — 每日签到，基础积分 +10 ()
+ 还要一个赌博签订模式 随机 -30 到 30  
+
+• 连续签到加成（3天×1.5、7天×2、30天×3）
+• /rank — 积分排行榜
+• /me — 查看自己的积分、连续签到天数
+• 积分用途：赌博下注、兑换奖励
+
+2. 赌博小游戏（用积分下注）
+
+• /dice <金额> — 掷骰子，大于3赢，赔率1:1
+• /slot <金额> — 老虎机（三个emoji），全同×10，两个同×2
+• /coin <金额> — 猜正反，赔率1:1
+• /roulette <金额> <选项> — 轮盘（红/黑/数字）
+• /gift <金额> @人 — 转赠积分给群友
+• 赌输了积分归零也不影响签到，慢慢攒回来
+
+3. 一言 API
+
+• /hitokoto — 随机一言（调用 hitokoto.cn API）
+• /hitokoto <分类> — 按分类获取（动画/文学/影视/诗词等）
+
+4. Telegram 游戏
+
+• /game — 发送 TG 内置游戏（Game URL）
+• 可以用 Telegram 的 Game 平台做个简单的 H5 小游戏
+• 游戏得分同步到积分系统（可选）
+• 比如： 2048、贪吃蛇，网页游戏套个 TG Game 的壳 
+
+5. 其他功能建议
+
+互动类：
+
+• /draw — 抽卡系统（角色/装备/表情包，随机稀有度）-你可以想如何和其他模块联动起来 
+• /marry @人 — 结婚系统（消耗积分，双方确认） -你可以想如何和其他模块联动起来 
+• /divorce @人 — 离婚（退一半积分）
+• /couple — 查看情侣榜
+• /guess <数字> — 猜数字（1-100，比大小提示）
+ 
+工具类：
+私聊用 
+ • /time — 当前时间
+• /remind <时间> <内容> — 定时提醒
+
+群管类（管理员）：
+
+• /setbet <金额> — 设置下注上限
+• /resetpoints @人 — 重置积分
+• /broadcast <内容> — 群公告
+
+技术方案
+
+语言：Python 
+存储：Redis（积分、签到、排行榜）
+GitHub action 编译 
+数据库：SQLite 和mysql （用户信息、游戏记录，可选）
+部署：Docker + docker-composeredis 存储：
+- points:{user_id}         → 积分
+- sign:{user_id}:{date}    → 签到记录
+- sign_streak:{user_id}    → 连续签到天数
+- rank                     → 排行榜（Sorted Set）数据结构
+
+# Redis key 设计
+points:{chat_id}:{user_id}      # 积分（string）
+sign:{chat_id}:{user_id}        # 签到日期（string）
+streak:{chat_id}:{user_id}      # 连续天数（string）
+rank:{chat_id}                  # 排行榜（sorted set）
+marry:{chat_id}:{user_id}       # 结婚对象（string）开发优先级
+
