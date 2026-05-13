@@ -38,7 +38,7 @@ async def cmd_remind(message: types.Message):
     if len(parts) < 3:
         await message.reply(
             "⏰ 定时提醒\n\n"
-            "用法：/remind <时间> <内容>\n"
+            "用法：/remind ＜时间＞ ＜内容＞\n"
             "时间格式：\n"
             "  YYYY-MM-DD HH:MM  如：2025-01-01 08:00\n"
             "  Xm  X分钟后  如：30m（30分钟后）\n"
@@ -106,12 +106,12 @@ async def cmd_help(message: types.Message):
 /rank — 积分排行榜
 
 🎰 赌博小游戏
-/dice <金额> — 掷骰子
-/slot <金额> — 老虎机
-/coin <金额> <正/反> — 猜正反
-/roulette <金额> <红/黑/数字> — 轮盘
-/guess <数字> — 猜数字(1-100)
-/gift <金额> — 转赠积分（回复消息）
+/dice ＜金额＞ — 掷骰子
+/slot ＜金额＞ — 老虎机
+/coin ＜金额＞ ＜正/反＞ — 猜正反
+/roulette ＜金额＞ ＜红/黑/数字＞ — 轮盘
+/guess ＜数字＞ — 猜数字(1-100)
+/gift ＜金额＞ — 转赠积分（回复消息）
 
 🎴 抽卡系统
 /draw — 单抽(50积分)
@@ -125,17 +125,17 @@ async def cmd_help(message: types.Message):
 
 📝 其他
 /hitokoto — 一言
-/hitokoto <分类> — 分类一言
+/hitokoto ＜分类＞ — 分类一言
 /game — 2048小游戏
 
 🔧 工具（私聊）
 /time — 当前时间
-/remind <时间> <内容> — 定时提醒
+/remind ＜时间＞ ＜内容＞ — 定时提醒
 
 👮 管理员
-/setbet <金额> — 设置下注上限
+/setbet ＜金额＞ — 设置下注上限
 /resetpoints — 重置积分（回复消息）
-/broadcast <内容> — 群公告
+/broadcast ＜内容＞ — 群公告
 /chats — 查看Bot所在群组"""
 
     await message.reply(text)
