@@ -7,7 +7,7 @@ from aiohttp import web
 from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
 from aiogram.filters import CommandStart
-from aiogram.types import Message
+from aiogram.types import BotCommand, Message
 from aiogram.client.default import DefaultBotProperties
 
 from config import config
@@ -107,6 +107,31 @@ async def main():
         token=config.BOT_TOKEN,
         default=DefaultBotProperties(parse_mode=ParseMode.HTML),
     )
+
+    # 注册命令菜单
+    await bot.set_my_commands([
+        BotCommand(command="help", description="查看所有命令"),
+        BotCommand(command="sign", description="每日签到（+10积分）"),
+        BotCommand(command="gsign", description="赌博签到（随机积分）"),
+        BotCommand(command="me", description="查看个人信息"),
+        BotCommand(command="rank", description="积分排行榜"),
+        BotCommand(command="dice", description="掷骰子"),
+        BotCommand(command="slot", description="老虎机"),
+        BotCommand(command="coin", description="猜正反"),
+        BotCommand(command="roulette", description="轮盘"),
+        BotCommand(command="guess", description="猜数字(1-100)"),
+        BotCommand(command="gift", description="转赠积分（回复消息）"),
+        BotCommand(command="draw", description="单抽(50积分)"),
+        BotCommand(command="draw10", description="十连抽(500积分)"),
+        BotCommand(command="cards", description="查看我的卡片"),
+        BotCommand(command="marry", description="求婚（回复消息）"),
+        BotCommand(command="divorce", description="离婚"),
+        BotCommand(command="couple", description="情侣榜"),
+        BotCommand(command="hitokoto", description="一言"),
+        BotCommand(command="game", description="2048小游戏"),
+        BotCommand(command="time", description="当前时间"),
+        BotCommand(command="remind", description="定时提醒（私聊）"),
+    ])
 
     # 启动提醒任务
     asyncio.create_task(check_reminders(bot))
