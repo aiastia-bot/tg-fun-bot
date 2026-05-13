@@ -2,6 +2,7 @@ version: '3.8'
 
 services:
   bot:
+    image: aiastia/tg-fun-bot:main
     build: .
     container_name: tg-bot
     restart: unless-stopped
