@@ -34,7 +34,7 @@ async def cmd_dice(message: types.Message):
 
     amount = _parse_amount(message.text or "")
     if amount is None:
-        await message.reply("用法：/dice <金额>\n示例：/dice 100")
+        await message.reply("用法：/dice ＜金额＞\n示例：/dice 100")
         return
 
     result = await game_service.dice(chat_id, user_id, amount)
@@ -79,7 +79,7 @@ async def cmd_slot(message: types.Message):
 
     amount = _parse_amount(message.text or "")
     if amount is None:
-        await message.reply("用法：/slot <金额>\n示例：/slot 100")
+        await message.reply("用法：/slot ＜金额＞\n示例：/slot 100")
         return
 
     result = await game_service.slot(chat_id, user_id, amount)
@@ -127,7 +127,7 @@ async def cmd_coin(message: types.Message):
 
     parts = (message.text or "").split()
     if len(parts) < 3:
-        await message.reply("用法：/coin <金额> <正/反>\n示例：/coin 100 正")
+        await message.reply("用法：/coin ＜金额＞ ＜正/反＞\n示例：/coin 100 正")
         return
 
     try:
@@ -180,7 +180,7 @@ async def cmd_roulette(message: types.Message):
 
     parts = (message.text or "").split()
     if len(parts) < 3:
-        await message.reply("用法：/roulette <金额> <红/黑/数字>\n示例：/roulette 100 红")
+        await message.reply("用法：/roulette ＜金额＞ ＜红/黑/数字＞\n示例：/roulette 100 红")
         return
 
     try:
@@ -235,7 +235,7 @@ async def cmd_guess(message: types.Message):
 
     parts = (message.text or "").split()
     if len(parts) < 2:
-        await message.reply("用法：/guess <1-100的数字>\n示例：/guess 50\n每次消耗10积分")
+        await message.reply("用法：/guess ＜1-100的数字＞\n示例：/guess 50\n每次消耗10积分")
         return
 
     try:
@@ -265,7 +265,7 @@ async def cmd_guess(message: types.Message):
         text += f"你猜的：{guess}\n"
         text += f"提示：{result['hint']}\n"
         text += f"消耗：10 积分\n"
-        text += "继续猜：/guess <数字>"
+        text += "继续猜：/guess ＜数字＞"
 
     points = await redis_db.get_points(chat_id, user_id)
     text += f"\n💎 当前积分：{points}"
@@ -288,7 +288,7 @@ async def cmd_gift(message: types.Message):
     # 解析：/gift <金额> @用户
     parts = (message.text or "").split()
     if len(parts) < 3:
-        await message.reply("用法：/gift <金额> @用户\n示例：/gift 100 @friend")
+        await message.reply("用法：/gift ＜金额＞ @用户\n示例：/gift 100 @friend")
         return
 
     try:
@@ -300,7 +300,7 @@ async def cmd_gift(message: types.Message):
     # 获取目标用户
     if not message.reply_to_message:
         # 尝试从文本解析
-        await message.reply("请回复要转赠的人的消息，或使用 /gift <金额> 回复某人的消息")
+        await message.reply("请回复要转赠的人的消息，或使用 /gift ＜金额＞ 回复某人的消息")
         return
 
     to_id = message.reply_to_message.from_user.id

@@ -22,7 +22,7 @@ async def cmd_setbet(message: types.Message):
 
     parts = (message.text or "").split()
     if len(parts) < 2:
-        await message.reply("用法：/setbet <金额>\n0 = 不限制")
+        await message.reply("用法：/setbet ＜金额＞\n0 = 不限制")
         return
 
     try:
@@ -69,7 +69,7 @@ async def cmd_broadcast(message: types.Message):
 
     parts = (message.text or "").split(maxsplit=1)
     if len(parts) < 2:
-        await message.reply("用法：/broadcast <内容>")
+        await message.reply("用法：/broadcast ＜内容＞")
         return
 
     content = parts[1]
