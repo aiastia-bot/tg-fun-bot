@@ -34,8 +34,10 @@ async def cmd_remind(message: types.Message):
         await message.reply("⚠️ 提醒功能仅限私聊使用！")
         return
 
-    parts = (message.text or "").split(maxsplit=2)
-    if len(parts) < 3:
+    raw = (message.text or "").strip()
+    raw = raw[len("/remind"):].strip()
+
+    if not raw:
         await message.reply(
             "⏰ 定时提醒\n\n"
             "用法：/remind ＜时间＞ ＜内容＞\n"
@@ -49,31 +51,49 @@ async def cmd_remind(message: types.Message):
         )
         return
 
-    time_str = parts[1]
-    content = parts[2]
-
     # 解析时间
     remind_time = None
+    content = None
 
     # 相对时间：Xm / Xh
-    rel_match = re.match(r"^(\d+)(m|h)$", time_str)
+    rel_match = re.match(r"^(\d+)(m|h)\s+(.+)$", raw)
     if rel_match:
         num = int(rel_match.group(1))
         unit = rel_match.group(2)
+        content = rel_match.group(3)
         if unit == "m":
             remind_time = datetime.now() + timedelta(minutes=num)
         else:
             remind_time = datetime.now() + timedelta(hours=num)
     else:
-        # 绝对时间
-        try:
-            remind_time = datetime.strptime(time_str, "%Y-%m-%d")
-        except ValueError:
+        # 绝对时间 YYYY-MM-DD HH:MM
+        abs_match = re.match(r"^(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2})\s+(.+)$", raw)
+        if abs_match:
+            time_str = abs_match.group(1)
+            content = abs_match.group(2)
             try:
                 remind_time = datetime.strptime(time_str, "%Y-%m-%d %H:%M")
             except ValueError:
-                await message.reply("❌ 时间格式错误！\n请使用 YYYY-MM-DD 或 YYYY-MM-DD HH:MM 或 Xm/Xh")
+                await message.reply("❌ 时间格式错误！\n请使用 YYYY-MM-DD HH:MM 或 Xm/Xh")
                 return
+        else:
+            # 绝对时间 YYYY-MM-DD（只有日期）
+            abs_match2 = re.match(r"^(\d{4}-\d{2}-\d{2})\s+(.+)$", raw)
+            if abs_match2:
+                time_str = abs_match2.group(1)
+                content = abs_match2.group(2)
+                try:
+                    remind_time = datetime.strptime(time_str, "%Y-%m-%d")
+                except ValueError:
+                    await message.reply("❌ 时间格式错误！\n请使用 YYYY-MM-DD 或 YYYY-MM-DD HH:MM 或 Xm/Xh")
+                    return
+            else:
+                await message.reply("❌ 时间格式错误！\n请使用 YYYY-MM-DD HH:MM 或 Xm/Xh")
+                return
+
+    if not content:
+        await message.reply("❌ 请输入提醒内容！")
+        return
 
     if remind_time <= datetime.now():
         await message.reply("❌ 提醒时间必须在当前时间之后！")
