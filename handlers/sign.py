@@ -11,6 +11,10 @@ router = Router()
 @router.message(Command("sign"))
 async def cmd_sign(message: types.Message):
     """每日签到"""
+    if message.chat.type == "private":
+        await message.reply("⚠️ 签到功能仅限群组使用！")
+        return
+
     chat_id = message.chat.id
     user_id = message.from_user.id
 
@@ -52,6 +56,10 @@ async def cmd_sign(message: types.Message):
 @router.message(Command("gsign"))
 async def cmd_gamble_sign(message: types.Message):
     """赌博签到：随机积分"""
+    if message.chat.type == "private":
+        await message.reply("⚠️ 签到功能仅限群组使用！")
+        return
+
     chat_id = message.chat.id
     user_id = message.from_user.id
 
@@ -96,6 +104,10 @@ async def cmd_gamble_sign(message: types.Message):
 @router.message(Command("me"))
 async def cmd_me(message: types.Message):
     """查看个人信息"""
+    if message.chat.type == "private":
+        await message.reply("⚠️ 此功能仅限群组使用！")
+        return
+
     chat_id = message.chat.id
     user_id = message.from_user.id
 
@@ -137,6 +149,10 @@ async def cmd_me(message: types.Message):
 @router.message(Command("rank"))
 async def cmd_rank(message: types.Message):
     """积分排行榜"""
+    if message.chat.type == "private":
+        await message.reply("⚠️ 排行榜仅限群组使用！")
+        return
+
     chat_id = message.chat.id
     rank_data = await redis_db.get_rank(chat_id, top_n=10)
 
