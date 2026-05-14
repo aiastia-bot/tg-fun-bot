@@ -8,7 +8,7 @@ from services.game_service import game_service
 
 router = Router()
 
-BET_AMOUNTS = [10, 50, 100, 500, 1000]
+BET_AMOUNTS = [1, 10, 50, 100, 500]
 
 
 def _parse_amount(text: str) -> int | None:
