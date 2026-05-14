@@ -1,3 +1,6 @@
+import asyncio
+import logging
+
 from aiogram import Router, types
 from aiogram.filters import Command
 
@@ -6,6 +9,20 @@ from database.sqlite_db import sqlite_db
 from services.sign_service import sign_service
 
 router = Router()
+logger = logging.getLogger(__name__)
+
+
+async def _auto_delete(message: types.Message, reply: types.Message, delay: int = 60):
+    """延迟删除用户消息和Bot回复，无权限时静默失败"""
+    await asyncio.sleep(delay)
+    try:
+        await reply.delete()
+    except Exception:
+        pass
+    try:
+        await message.delete()
+    except Exception:
+        pass
 
 
 @router.message(Command("sign"))
@@ -31,11 +48,12 @@ async def cmd_sign(message: types.Message):
     result = await sign_service.daily_sign(chat_id, user_id)
 
     if not result["success"]:
-        await message.reply(
+        reply = await message.reply(
             f"⚠️ {result['message']}\n"
             f"📊 当前积分：{result['points']}\n"
             f"🔥 连续签到：{result['streak']} 天"
         )
+        asyncio.create_task(_auto_delete(message, reply))
         return
 
     # 构建签到消息
@@ -50,7 +68,8 @@ async def cmd_sign(message: types.Message):
     text += f"🔥 连续签到：{result['streak']} 天\n"
     text += f"💎 当前积分：{result['points']}"
 
-    await message.reply(text)
+    reply = await message.reply(text)
+    asyncio.create_task(_auto_delete(message, reply))
 
 
 @router.message(Command("gsign"))
@@ -74,11 +93,12 @@ async def cmd_gamble_sign(message: types.Message):
     result = await sign_service.gamble_sign(chat_id, user_id)
 
     if not result["success"]:
-        await message.reply(
+        reply = await message.reply(
             f"⚠️ {result['message']}\n"
             f"📊 当前积分：{result['points']}\n"
             f"🔥 连续签到：{result['streak']} 天"
         )
+        asyncio.create_task(_auto_delete(message, reply))
         return
 
     min_val, max_val = result["gamble_range"]
@@ -98,7 +118,8 @@ async def cmd_gamble_sign(message: types.Message):
     text += f"🔥 连续签到：{result['streak']} 天\n"
     text += f"💎 当前积分：{result['points']}"
 
-    await message.reply(text)
+    reply = await message.reply(text)
+    asyncio.create_task(_auto_delete(message, reply))
 
 
 @router.message(Command("me"))

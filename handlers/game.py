@@ -1,3 +1,5 @@
+import asyncio
+
 from aiogram import Router, types
 from aiogram.filters import Command
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
@@ -9,6 +11,28 @@ from services.game_service import game_service
 router = Router()
 
 BET_AMOUNTS = [1, 10, 50, 100, 500]
+
+
+async def _auto_delete(message: types.Message, reply: types.Message, delay: int = 60):
+    """延迟删除用户消息和Bot回复，无权限时静默失败"""
+    await asyncio.sleep(delay)
+    try:
+        await reply.delete()
+    except Exception:
+        pass
+    try:
+        await message.delete()
+    except Exception:
+        pass
+
+
+async def _auto_delete_callback(callback_msg: types.Message, delay: int = 60):
+    """延迟删除回调消息（按钮消息）"""
+    await asyncio.sleep(delay)
+    try:
+        await callback_msg.delete()
+    except Exception:
+        pass
 
 
 def _parse_amount(text: str) -> int | None:
@@ -152,15 +176,18 @@ async def cmd_dice(message: types.Message):
 
     amount = _parse_amount(message.text or "")
     if amount is None:
-        await message.reply("🎲 掷骰子\n\n选择下注金额：", reply_markup=_bet_keyboard("dice"))
+        reply = await message.reply("🎲 掷骰子\n\n选择下注金额：", reply_markup=_bet_keyboard("dice"))
+        asyncio.create_task(_auto_delete_callback(reply, 120))
         return
 
     result = await game_service.dice(chat_id, user_id, amount)
     if not result["ok"]:
-        await message.reply(f"❌ {result['message']}")
+        reply = await message.reply(f"❌ {result['message']}")
+        asyncio.create_task(_auto_delete(message, reply))
         return
 
-    await message.reply(await _dice_text(chat_id, user_id, result))
+    reply = await message.reply(await _dice_text(chat_id, user_id, result))
+    asyncio.create_task(_auto_delete(message, reply))
 
 
 @router.message(Command("slot"))
@@ -172,15 +199,18 @@ async def cmd_slot(message: types.Message):
 
     amount = _parse_amount(message.text or "")
     if amount is None:
-        await message.reply("🎰 老虎机\n\n选择下注金额：", reply_markup=_bet_keyboard("slot"))
+        reply = await message.reply("🎰 老虎机\n\n选择下注金额：", reply_markup=_bet_keyboard("slot"))
+        asyncio.create_task(_auto_delete_callback(reply, 120))
         return
 
     result = await game_service.slot(chat_id, user_id, amount)
     if not result["ok"]:
-        await message.reply(f"❌ {result['message']}")
+        reply = await message.reply(f"❌ {result['message']}")
+        asyncio.create_task(_auto_delete(message, reply))
         return
 
-    await message.reply(await _slot_text(chat_id, user_id, result))
+    reply = await message.reply(await _slot_text(chat_id, user_id, result))
+    asyncio.create_task(_auto_delete(message, reply))
 
 
 @router.message(Command("coin"))
@@ -200,13 +230,16 @@ async def cmd_coin(message: types.Message):
         choice = parts[2]
         result = await game_service.coin(chat_id, user_id, amount, choice)
         if not result["ok"]:
-            await message.reply(f"❌ {result['message']}")
+            reply = await message.reply(f"❌ {result['message']}")
+            asyncio.create_task(_auto_delete(message, reply))
             return
-        await message.reply(await _coin_text(chat_id, user_id, result))
+        reply = await message.reply(await _coin_text(chat_id, user_id, result))
+        asyncio.create_task(_auto_delete(message, reply))
         return
 
     # 无参数时显示按钮
-    await message.reply("🪙 猜正反\n\n选择下注金额：", reply_markup=_bet_keyboard("coin"))
+    reply = await message.reply("🪙 猜正反\n\n选择下注金额：", reply_markup=_bet_keyboard("coin"))
+    asyncio.create_task(_auto_delete_callback(reply, 120))
 
 
 @router.message(Command("roulette"))
@@ -226,13 +259,16 @@ async def cmd_roulette(message: types.Message):
         option = parts[2]
         result = await game_service.roulette(chat_id, user_id, amount, option)
         if not result["ok"]:
-            await message.reply(f"❌ {result['message']}")
+            reply = await message.reply(f"❌ {result['message']}")
+            asyncio.create_task(_auto_delete(message, reply))
             return
-        await message.reply(await _roulette_text(chat_id, user_id, result))
+        reply = await message.reply(await _roulette_text(chat_id, user_id, result))
+        asyncio.create_task(_auto_delete(message, reply))
         return
 
     # 无参数时显示按钮
-    await message.reply("🎡 轮盘\n\n选择下注金额：", reply_markup=_bet_keyboard("roulette"))
+    reply = await message.reply("🎡 轮盘\n\n选择下注金额：", reply_markup=_bet_keyboard("roulette"))
+    asyncio.create_task(_auto_delete_callback(reply, 120))
 
 
 @router.message(Command("guess"))
@@ -260,7 +296,8 @@ async def cmd_guess(message: types.Message):
     result = await game_service.guess_number(chat_id, user_id, guess)
 
     if not result["ok"]:
-        await message.reply(f"❌ {result['message']}")
+        reply = await message.reply(f"❌ {result['message']}")
+        asyncio.create_task(_auto_delete(message, reply))
         return
 
     if result["win"]:
@@ -279,7 +316,8 @@ async def cmd_guess(message: types.Message):
     points = await redis_db.get_points(chat_id, user_id)
     text += f"\n💎 当前积分：{points}"
 
-    await message.reply(text)
+    reply = await message.reply(text)
+    asyncio.create_task(_auto_delete(message, reply))
 
 
 @router.message(Command("gift"))
@@ -310,16 +348,18 @@ async def cmd_gift(message: types.Message):
     result = await game_service.gift_points(chat_id, user_id, to_id, amount)
 
     if not result["ok"]:
-        await message.reply(f"❌ {result['message']}")
+        reply = await message.reply(f"❌ {result['message']}")
+        asyncio.create_task(_auto_delete(message, reply))
         return
 
     points = await redis_db.get_points(chat_id, user_id)
-    await message.reply(
+    reply = await message.reply(
         f"🎁 转赠成功！\n\n"
         f"转赠给：{to_name}\n"
         f"金额：{result['amount']} 💎\n"
         f"你的剩余积分：{points}"
     )
+    asyncio.create_task(_auto_delete(message, reply))
 
 
 # ========== Callback Handlers ==========
@@ -340,18 +380,21 @@ async def callback_bet(callback: CallbackQuery):
             f"{game_name}\n下注：{amount} 💎\n\n请选择：",
             reply_markup=_choice_keyboard(game, amount)
         )
+        asyncio.create_task(_auto_delete_callback(callback.message, 120))
     elif game == "dice":
         result = await game_service.dice(chat_id, user_id, amount)
         if not result["ok"]:
             await callback.message.edit_text(f"❌ {result['message']}")
         else:
             await callback.message.edit_text(await _dice_text(chat_id, user_id, result))
+        asyncio.create_task(_auto_delete_callback(callback.message))
     elif game == "slot":
         result = await game_service.slot(chat_id, user_id, amount)
         if not result["ok"]:
             await callback.message.edit_text(f"❌ {result['message']}")
         else:
             await callback.message.edit_text(await _slot_text(chat_id, user_id, result))
+        asyncio.create_task(_auto_delete_callback(callback.message))
 
     await callback.answer()
 
@@ -372,11 +415,13 @@ async def callback_play(callback: CallbackQuery):
             await callback.message.edit_text(f"❌ {result['message']}")
         else:
             await callback.message.edit_text(await _coin_text(chat_id, user_id, result))
+        asyncio.create_task(_auto_delete_callback(callback.message))
     elif game == "roulette":
         result = await game_service.roulette(chat_id, user_id, amount, choice)
         if not result["ok"]:
             await callback.message.edit_text(f"❌ {result['message']}")
         else:
             await callback.message.edit_text(await _roulette_text(chat_id, user_id, result))
+        asyncio.create_task(_auto_delete_callback(callback.message))
 
     await callback.answer()
